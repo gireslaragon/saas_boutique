@@ -1,36 +1,106 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# 🛒 Boutique SaaS (POS + Stock + ERP léger)
 
-## Getting Started
+SaaS de gestion de boutique moderne (POS, stock, facturation, offline-first, event-driven).
 
-First, run the development server:
+## 🚀 Objectif du projet
+
+Créer un système de caisse moderne, rapide et fiable pour petites et moyennes boutiques :
+
+- Fonctionne même en cas de coupure internet (offline-first)
+- Gestion stricte du stock en temps réel
+- Traçabilité complète de toutes les opérations
+- Système simple pour les caissières
+- Vision avancée pour le patron
+
+## 🧠 Concept clé (TRÈS IMPORTANT)
+
+> Une vente est immuable.  
+> Toute modification est un événement, jamais une édition directe.
+
+Tout repose sur :
+- Event Store (source of truth)
+- Transaction Engine central
+- Stock snapshots (lecture rapide)
+- Audit complet
+
+---
+
+## 🚀 Features
+
+### 💳 POS (Caisse)
+- Vente rapide
+- Panier intelligent
+- Paiement + rendu monnaie
+- Produits avec variantes
+
+### 📦 Stock
+- Stock temps réel
+- Mouvements traçables
+- Alertes stock faible
+
+### 🧾 Facturation
+- Factures individuelles
+- Factures groupées (micro-achats)
+- Numérotation automatique
+
+### 🔁 Retours / échanges
+- Retour partiel ou total
+- Échanges produits
+- Ajustements tracés
+
+### 👥 Utilisateurs
+- Admin (patron)
+- Caissière
+- Permissions strictes
+
+## ⚙️ Stack technique
+
+Frontend :
+- Next.js (App Router)
+- TypeScript
+- TailwindCSS
+- shadcn/ui
+- Zustand
+- React Query
+- PWA
+
+Backend :
+- Next.js API Routes
+- Transaction Engine (Node)
+
+DB :
+- PostgreSQL
+- Drizzle ORM
+
+Offline :
+- IndexedDB (Dexie.js)
+- Sync engine
+
+Auth :
+- JWT custom
+
+DevOps :
+- Docker
+- VPS
+- Coolify
+
+## 📁 Scripts
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+pnpm dev       # dev server
+pnpm build     # build production
+pnpm start     # start production
+pnpm lint      # lint code
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## 🤝 Collaboration / Contact
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Projet: Auteur et développé par : Gires NKONGA
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+📧 Email : giresnkonga9@gmail.com
 
-## Learn More
+👉 Ouvert aux collaborations :
 
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- Développement SaaS
+- POS / ERP
+- Architecture backend
+- Optimisation systèmes offline-first
