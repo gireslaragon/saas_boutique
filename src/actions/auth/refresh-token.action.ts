@@ -99,7 +99,7 @@ export async function refreshTokenAction(): Promise<ActionResult<{ refreshed: bo
       .update(platformAdmins)
       .set({
         refreshTokenHash:      newRefreshHash,
-        refreshTokenExpiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+        refreshTokenExpiresAt: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000),
         updatedAt:             new Date(),
       })
       .where(eq(platformAdmins.id, admin.id));

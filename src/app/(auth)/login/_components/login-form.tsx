@@ -8,6 +8,7 @@ import { Eye, EyeOff, Loader2, ShoppingBag } from "lucide-react";
 import { loginSchema, type LoginInput } from "@/lib/validators/auth.schema";
 import { loginAction } from "@/actions/auth/login.action";
 import { toast } from "sonner";
+import Link from "next/link";
 
 export function LoginForm() {
   const router = useRouter();
@@ -49,16 +50,21 @@ export function LoginForm() {
 
         {/* Logo & titre */}
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center w-16 h-16 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-600/30">
-            <ShoppingBag className="w-8 h-8 text-white" />
+          <div className="inline-flex items-center justify-center w-16 md:w-20 h-16 md:h-20 bg-blue-600 rounded-2xl mb-4 shadow-lg shadow-blue-600/30">
+            {/* <ShoppingBag className="w-8 h-8 text-white" /> */}
+            <span className="text-white font-bold text-4xl md:text-5xl">K</span>
           </div>
-          <h1 className="text-2xl font-bold text-white">Boutique SaaS</h1>
-          <p className="text-slate-400 mt-1 text-sm">Connectez-vous à votre espace</p>
+          <h1 className="text-2xl font-bold text-white">Kivo</h1>
+          <p className="text-slate-400 mt-1 text-sm">Vends plus, Gère mieux.</p>
         </div>
 
         {/* Carte du formulaire */}
         <div className="bg-white/5 backdrop-blur-sm border border-white/10 rounded-2xl p-8 shadow-2xl">
           <form onSubmit={handleSubmit(onSubmit)} noValidate className="space-y-5">
+
+            <div className="flex justify-center items-center">
+              <p className="text-white mt-1 text-base">Connectez-vous à votre espace</p>
+            </div>
 
             {/* Email */}
             <div>
@@ -80,7 +86,7 @@ export function LoginForm() {
                     : "border-white/10 hover:border-white/20"
                   }
                 `}
-                placeholder="patron@maboutique.cm"
+                placeholder="mon@email.com"
               />
               {errors.email && (
                 <p className="mt-1.5 text-xs text-red-400">{errors.email.message}</p>
@@ -93,12 +99,12 @@ export function LoginForm() {
                 <label htmlFor="password" className="block text-sm font-medium text-slate-300">
                   Mot de passe
                 </label>
-                <a
+                <Link
                   href="/forgot-password"
-                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors"
+                  className="text-xs text-blue-400 hover:text-blue-300 transition-colors hover:underline"
                 >
                   Mot de passe oublié ?
-                </a>
+                </Link>
               </div>
               <div className="relative">
                 <input
@@ -121,7 +127,7 @@ export function LoginForm() {
                 <button
                   type="button"
                   onClick={() => setShowPassword((v) => !v)}
-                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-200 transition-colors p-1 cursor-pointer"
                   aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                 >
                   {showPassword
@@ -146,7 +152,7 @@ export function LoginForm() {
                 disabled:opacity-60 disabled:cursor-not-allowed
                 transition-all duration-200 shadow-lg shadow-blue-600/20
                 flex items-center justify-center gap-2
-                mt-2
+                mt-2 
               `}
             >
               {loading ? (
@@ -163,10 +169,10 @@ export function LoginForm() {
 
         {/* Footer */}
         <p className="text-center text-slate-500 text-xs mt-6">
-          Vous n'avez pas de compte ?{" "}
-          <a href="/register" className="text-blue-400 hover:text-blue-300 transition-colors">
+          Vous n&apos;avez pas de compte ?{" "}
+          <Link href="/register" className="text-blue-400 hover:text-blue-300 transition-colors hover:underline">
             Créer votre boutique
-          </a>
+          </Link>
         </p>
       </div>
     </div>

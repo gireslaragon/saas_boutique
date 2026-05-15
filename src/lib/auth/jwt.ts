@@ -93,12 +93,9 @@ export async function verifyToken<T extends AnyTokenPayload>(token: string): Pro
  */
 export async function verifyAccessToken(token: string): Promise<AccessTokenPayload | null> {
   try {
-    const payload = await verifyToken<AnyTokenPayload>(token);
-    if (payload.type !== "access") return null;
-    // payload peut être soit AccessTokenPayload soit SuperAdminTokenPayload —
-    // on vérifie explicitement la présence de la valeur littérale
-    if ((payload as SuperAdminTokenPayload).role === "super_admin") return null;
-    return payload as AccessTokenPayload;
+    const payload = await verifyToken<AccessTokenPayload>(token);
+    if (payload.type !== "access" || (payload.role !== "admin" && payload.role !== "cashier")) return null;
+    return payload;
   } catch {
     return null;
   }
@@ -109,10 +106,9 @@ export async function verifyAccessToken(token: string): Promise<AccessTokenPaylo
  */
 export async function verifySuperAdminToken(token: string): Promise<SuperAdminTokenPayload | null> {
   try {
-    const payload = await verifyToken<AnyTokenPayload>(token);
-    if (payload.type !== "access") return null;
-    if ((payload as SuperAdminTokenPayload).role !== "super_admin") return null;
-    return payload as SuperAdminTokenPayload;
+    const payload = await verifyToken<SuperAdminTokenPayload>(token);
+    if (payload.type !== "access" || payload.role !== "super_admin") return null;
+    return payload;
   } catch {
     return null;
   }

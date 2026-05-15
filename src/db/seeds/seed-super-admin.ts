@@ -17,7 +17,7 @@ import bcrypt from "bcryptjs";
 
 async function seedSuperAdmin() {
   const email = process.env.SUPER_ADMIN_EMAIL ?? "admin@boutique-saas.cm";
-  const password = process.env.SUPER_ADMIN_PASSWORD;
+  const password = process.env.SUPER_ADMIN_PASSWORD ?? "Ballon2026!";
 
   if (!password) {
     throw new Error("SUPER_ADMIN_PASSWORD manquant dans .env.local");
