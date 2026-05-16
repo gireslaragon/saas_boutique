@@ -29,7 +29,7 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 interface ProductFormProps {
-  categories: { id: string; name: string; color: string }[];
+  categories: { id: string; name: string; color: string | null }[];
   onSuccess:  () => void;
   onCancel:   () => void;
 }
