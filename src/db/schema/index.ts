@@ -48,3 +48,6 @@ export * from "./stock-losses";
 
 // ── Niveau 9 : Event Store (dépend de tenants + users)
 export * from "./events";
+
+// ── Notifications (dépend de tenants + users)
+export * from "./notifications";

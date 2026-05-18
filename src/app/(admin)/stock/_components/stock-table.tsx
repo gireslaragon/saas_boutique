@@ -13,6 +13,7 @@ export interface StockRow {
   variantLabel:    string;
   variantType:     string;
   sellingPrice:    number;
+  costPrice?:      number;
   unitsPerVariant: number;
   alertThreshold:  number;
   productId:       string;
@@ -91,7 +92,7 @@ export function StockTable({ data, onRestock, onLoss }: StockTableProps) {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Rechercher un produit ou variante…"
+            placeholder="Rechercher un produit…"
             className="w-full pl-9 pr-4 py-2.5 bg-slate-800/50 border border-slate-700/50 rounded-xl text-sm text-white placeholder-slate-500 focus:outline-none focus:border-blue-500/50 transition-colors"
           />
         </div>
@@ -119,7 +120,7 @@ export function StockTable({ data, onRestock, onLoss }: StockTableProps) {
       </div>
 
       {/* Compteur */}
-      <p className="text-xs text-slate-500">{filtered.length} variante{filtered.length !== 1 ? "s" : ""}</p>
+      <p className="text-xs text-slate-500">{filtered.length} produit{filtered.length !== 1 ? "s" : ""}</p>
 
       {/* Table */}
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
@@ -141,7 +142,7 @@ export function StockTable({ data, onRestock, onLoss }: StockTableProps) {
           <div className="divide-y divide-slate-700/30">
             {filtered.map((row) => (
               <div
-                key={row.variantId}
+                key={row.productId}
                 className={cn(
                   "grid grid-cols-[2fr_1fr_1fr_1fr_auto] gap-4 px-4 py-3.5 items-center",
                   "hover:bg-slate-700/20 transition-colors",

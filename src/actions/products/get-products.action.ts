@@ -6,7 +6,7 @@ import { productVariants } from "@/db/schema/product-variants";
 import { categories } from "@/db/schema/categories";
 import { stockSnapshots } from "@/db/schema/stock-snapshots";
 import { guardAdminAction } from "@/lib/auth/role-guards";
-import { eq, and, asc, ilike, sql } from "drizzle-orm";
+import { eq, and, asc, ilike } from "drizzle-orm";
 
 export interface ProductWithVariants {
   id:           string;
@@ -59,7 +59,7 @@ export async function getProductsAction(search?: string) {
     .from(products)
     .leftJoin(categories,      eq(products.categoryId, categories.id))
     .leftJoin(productVariants, eq(productVariants.productId, products.id))
-    .leftJoin(stockSnapshots,  eq(stockSnapshots.variantId, productVariants.id))
+    .leftJoin(stockSnapshots,  and(eq(stockSnapshots.productId, products.id), eq(stockSnapshots.tenantId, tenantId)))
     .where(and(
       eq(products.tenantId, tenantId),
       search ? ilike(products.name, `%${search}%`) : undefined,

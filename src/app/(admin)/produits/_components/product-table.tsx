@@ -9,7 +9,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils/cn";
 import { formatMoney, formatNumber, formatDate } from "@/lib/utils/formatters";
-import { toggleProductAction } from "@/actions/products/create-product.action";
+import { toggleProductAction } from "@/actions/products/create-product.action.server";
 import type { ProductWithVariants } from "@/actions/products/get-products.action";
 
 interface ProductTableProps {

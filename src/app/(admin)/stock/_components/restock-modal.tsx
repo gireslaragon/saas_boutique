@@ -6,12 +6,13 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { X, Package, TrendingUp, Loader2 } from "lucide-react";
 import { toast } from "sonner";
-import { restockAction } from "@/actions/stock/stock.action";
+import { restockAction, type RestockInput } from "@/actions/stock/stock.action";
 import { formatNumber } from "@/lib/utils/formatters";
 import type { StockRow } from "./stock-table";
 
 const schema = z.object({
   qtyUnitsAdded:    z.coerce.number().int().positive("Quantité requise (> 0)"),
+  unitType:         z.enum(["unit", "pack", "case"]),
   costPricePerUnit: z.coerce.number().min(0, "Prix invalide"),
   supplier:         z.string().optional(),
   notes:            z.string().optional(),
@@ -30,19 +31,33 @@ export function RestockModal({ row, onClose, onSuccess }: RestockModalProps) {
 
   const { register, handleSubmit, watch, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: { qtyUnitsAdded: 1, costPricePerUnit: 0 },
+    defaultValues: { qtyUnitsAdded: 1, unitType: "unit", costPricePerUnit: 0 },
   });
 
-  const qtyWatch  = watch("qtyUnitsAdded")  || 0;
-  const priceWatch = watch("costPricePerUnit") || 0;
-  const totalCost = qtyWatch * priceWatch;
+  const qtyWatch   = Number(watch("qtyUnitsAdded")  || 0);
+  const unitType   = watch("unitType") as "unit" | "pack" | "case";
+  const priceWatch = Number(watch("costPricePerUnit") || 0);
+
+  // Convert quantities/prices based on selected unitType and known unitsPerVariant
+  const unitsPer = row.unitsPerVariant ?? 1;
+  const qtyUnitsAddedConverted = unitType === "unit" ? qtyWatch : qtyWatch * unitsPer;
+  const totalCost = qtyWatch * priceWatch; // if pack/case, priceWatch is per pack/case
 
   async function onSubmit(data: FormValues) {
     setLoading(true);
     try {
-      const res = await restockAction({ variantId: row.variantId, ...data });
+      // prepare payload converting to base units and unit price
+      const payload: RestockInput = {
+        variantId: row.variantId,
+        qtyUnitsAdded: unitType === "unit" ? data.qtyUnitsAdded : data.qtyUnitsAdded * (row.unitsPerVariant ?? 1),
+        costPricePerUnit: unitType === "unit" ? data.costPricePerUnit : (data.costPricePerUnit / (row.unitsPerVariant ?? 1)),
+        supplier: data.supplier,
+        notes: data.notes,
+      };
+
+      const res = await restockAction(payload);
       if (!res.success) { toast.error(res.error); return; }
-      toast.success(`Stock mis à jour — +${data.qtyUnitsAdded} unités`);
+      toast.success(`Stock mis à jour — +${payload.qtyUnitsAdded} unités`);
       onSuccess();
     } catch {
       toast.error("Erreur inattendue");
@@ -87,20 +102,29 @@ export function RestockModal({ row, onClose, onSuccess }: RestockModalProps) {
           <div className="grid grid-cols-2 gap-4">
             {/* Quantité */}
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                Quantité (unités) *
-              </label>
-              <input
-                type="number"
-                {...register("qtyUnitsAdded")}
-                className="w-full px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
-                min="1"
-              />
+              <label className="block text-xs font-medium text-slate-400 mb-1.5">Quantité *</label>
+              <div className="flex gap-2">
+                <input
+                  type="number"
+                  {...register("qtyUnitsAdded", { valueAsNumber: true })}
+                  className="w-full px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                  min="1"
+                />
+                <select
+                  {...register("unitType")}
+                  className="px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
+                >
+                  <option value="unit">Unité</option>
+                  <option value="pack">Paquet</option>
+                  <option value="case">Casier</option>
+                </select>
+              </div>
               {errors.qtyUnitsAdded && <p className="text-xs text-red-400 mt-1">{errors.qtyUnitsAdded.message}</p>}
-              {/* Indication en casiers */}
-              {row.unitsPerVariant > 1 && qtyWatch > 0 && (
+
+              {/* Indication en paquets/casiers si applicable */}
+              {unitType !== "unit" && qtyWatch > 0 && (
                 <p className="text-xs text-slate-500 mt-1">
-                  = {Math.floor(Number(qtyWatch) / row.unitsPerVariant)} {row.variantType === "case" ? "casiers" : "paquets"} + {Number(qtyWatch) % row.unitsPerVariant} unités
+                  = {qtyUnitsAddedConverted} unités ({Math.floor(qtyUnitsAddedConverted / unitsPer)} {unitType === "case" ? "casiers" : "paquets"} + {qtyUnitsAddedConverted % unitsPer} unités)
                 </p>
               )}
             </div>
@@ -108,11 +132,11 @@ export function RestockModal({ row, onClose, onSuccess }: RestockModalProps) {
             {/* Prix d'achat */}
             <div>
               <label className="block text-xs font-medium text-slate-400 mb-1.5">
-                Prix achat/unité (FCFA)
+                {unitType === "unit" ? "Prix achat/unité (FCFA)" : unitType === "case" ? "Prix achat/casier (FCFA)" : "Prix achat/paquet (FCFA)"}
               </label>
               <input
                 type="number"
-                {...register("costPricePerUnit")}
+                {...register("costPricePerUnit", { valueAsNumber: true })}
                 className="w-full px-3 py-2.5 bg-slate-800/80 border border-slate-700 rounded-xl text-sm text-white focus:outline-none focus:border-emerald-500/50 transition-colors"
                 min="0"
               />

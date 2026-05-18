@@ -30,7 +30,7 @@ export default async function NotificationsPage() {
         <div>
           <h1 className="text-xl font-bold text-white">Notifications</h1>
           <p className="text-sm text-slate-400 mt-0.5">
-            Messages de la plateforme Boutique SaaS
+            Messages de la plateforme Kivo
           </p>
         </div>
         {notifications.length > 0 && (

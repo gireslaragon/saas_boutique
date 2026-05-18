@@ -78,6 +78,16 @@ export function SettingsForm({ tenant, categories: initialCategories }: Settings
     setSaving(false);
     if (!res.success) { toast.error(res.error); return; }
     toast.success("Paramètres enregistrés");
+    // If the server created a notification (e.g. tenant name changed), notify client listeners
+    try {
+      const notificationCreated = (res as unknown as { notificationCreated?: boolean }).notificationCreated;
+      if (notificationCreated) {
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(new CustomEvent("notification:created", { detail: {} }));
+        }
+      }
+    } catch {}
+
     router.refresh();
   }
 
@@ -181,7 +191,7 @@ export function SettingsForm({ tenant, categories: initialCategories }: Settings
             </Field>
             <div className="p-4 bg-blue-500/5 border border-blue-500/20 rounded-xl">
               <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-blue-400 flex-shrink-0 mt-0.5" />
+                <Info className="w-4 h-4 text-blue-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-blue-300">
                   Exemple : seuil à 500 FCFA → un achat de biscuit à 100 FCFA sera ajouté
                   à la facture collective de la journée au lieu de créer sa propre facture.
@@ -209,7 +219,7 @@ export function SettingsForm({ tenant, categories: initialCategories }: Settings
             </Field>
             <div className="p-4 bg-amber-500/5 border border-amber-500/20 rounded-xl">
               <div className="flex items-start gap-2">
-                <Info className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
+                <Info className="w-4 h-4 text-amber-400 shrink-0 mt-0.5" />
                 <p className="text-xs text-amber-300">
                   Recommandé : 15-30 minutes. Maximum : 8 heures (480 min).
                   Cette mesure protège la caisse en cas d&apos;oubli de déconnexion.

@@ -1,7 +1,8 @@
 "use client";
 
 import { cn } from "@/lib/utils/cn";
-import { Bell, Search, User } from "lucide-react";
+import { User } from "lucide-react";
+import { NotificationsDropdown } from "@/components/notifications/NotificationsDropdown";
 import { useState } from "react";
 // import { cn } from "@/lib/utils/cn";
 
@@ -35,11 +36,7 @@ export function Navbar({ userName, userEmail, pageTitle }: NavbarProps) {
       <div className="flex-1" />
 
       {/* Notifications */}
-      <button className="relative w-8 h-8 flex items-center justify-center rounded-lg text-slate-400 hover:text-white hover:bg-slate-800 transition-colors">
-        <Bell className="w-4 h-4" />
-        {/* Badge notif */}
-        <span className="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full" />
-      </button>
+      <NotificationsDropdown />
 
       {/* Avatar profil */}
       <div className="relative">

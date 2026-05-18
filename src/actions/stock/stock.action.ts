@@ -28,6 +28,7 @@ export async function getStockAction() {
       unitsPerVariant: productVariants.unitsPerVariant,
       alertThreshold:  productVariants.alertThresholdUnits,
       sellingPrice:    productVariants.sellingPrice,
+      costPrice:     products.costPrice,
       productId:     products.id,
       productName:   products.name,
       imageUrl:      products.imageUrl,
@@ -37,11 +38,11 @@ export async function getStockAction() {
       qtyUnits:      stockSnapshots.qtyUnits,
       lastMovement:  stockSnapshots.lastMovementAt,
     })
-    .from(stockSnapshots)
-    .innerJoin(productVariants, eq(stockSnapshots.variantId, productVariants.id))
+    .from(productVariants)
     .innerJoin(products,        eq(productVariants.productId, products.id))
+    .leftJoin(stockSnapshots,   and(eq(stockSnapshots.productId, productVariants.productId), eq(stockSnapshots.tenantId, tenantId)))
     .leftJoin(categories,       eq(products.categoryId, categories.id))
-    .where(eq(stockSnapshots.tenantId, tenantId))
+    .where(eq(productVariants.tenantId, tenantId))
     .orderBy(asc(products.name));
 
   return {
@@ -55,6 +56,7 @@ export async function getStockAction() {
         variantLabel:   r.variantLabel,
         variantType:    r.variantType,
         sellingPrice:   Number(r.sellingPrice),
+        costPrice:      Number(r.costPrice ?? 0),
         unitsPerVariant: uPerV,
         alertThreshold:  threshold,
         productId:      r.productId,
@@ -83,6 +85,8 @@ const restockSchema = z.object({
   notes:            z.string().optional(),
 });
 
+export type RestockInput = z.infer<typeof restockSchema>;
+
 export async function restockAction(input: z.infer<typeof restockSchema>) {
   const auth = await guardAdminAction();
   if (!auth.success) return auth;
@@ -97,12 +101,21 @@ export async function restockAction(input: z.infer<typeof restockSchema>) {
 
   try {
     await withTransaction(async (tx) => {
-      // Lit le stock actuel
+      // Résout productId depuis la variante
+      const [variantRow] = await tx
+        .select({ productId: productVariants.productId })
+        .from(productVariants)
+        .where(eq(productVariants.id, variantId))
+        .limit(1);
+
+      if (!variantRow) throw new Error("Variante introuvable");
+
+      // Lit le stock actuel (par produit)
       const [snap] = await tx
         .select({ qtyUnits: stockSnapshots.qtyUnits })
         .from(stockSnapshots)
         .where(and(
-          eq(stockSnapshots.variantId, variantId),
+          eq(stockSnapshots.productId, variantRow.productId),
           eq(stockSnapshots.tenantId, tenantId),
         ))
         .limit(1);
@@ -110,24 +123,24 @@ export async function restockAction(input: z.infer<typeof restockSchema>) {
       const before = snap?.qtyUnits ?? 0;
       const after  = before + qtyUnitsAdded;
 
-      // Met à jour le snapshot
+      // Met à jour le snapshot (product-level)
       await tx.update(stockSnapshots)
         .set({ qtyUnits: after, lastMovementType: "restock", lastMovementAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(stockSnapshots.variantId, variantId), eq(stockSnapshots.tenantId, tenantId)));
+        .where(and(eq(stockSnapshots.productId, variantRow.productId), eq(stockSnapshots.tenantId, tenantId)));
 
-      // Journal mouvement
+      // Journal mouvement (productId)
       await tx.insert(stockMovements).values({
-        tenantId, variantId,
+        tenantId,
+        productId: variantRow.productId,
         movementType:  "restock",
         qtyUnitsDelta: qtyUnitsAdded,
         qtyUnitsBefore: before,
         qtyUnitsAfter:  after,
         reason:   supplier ?? "Approvisionnement",
-        notes,
         createdBy: userId,
       });
 
-      // Historique approvisionnement
+      // Historique approvisionnement (table garde la variantId)
       await tx.insert(restockings).values({
         tenantId, variantId,
         qtyUnitsAdded,
@@ -179,10 +192,19 @@ export async function declareLossAction(input: z.infer<typeof lossSchema>) {
 
   try {
     await withTransaction(async (tx) => {
+      // Résout productId depuis la variante
+      const [variantRow] = await tx
+        .select({ productId: productVariants.productId })
+        .from(productVariants)
+        .where(eq(productVariants.id, variantId))
+        .limit(1);
+
+      if (!variantRow) throw new Error("Variante introuvable");
+
       const [snap] = await tx
         .select({ qtyUnits: stockSnapshots.qtyUnits })
         .from(stockSnapshots)
-        .where(and(eq(stockSnapshots.variantId, variantId), eq(stockSnapshots.tenantId, tenantId)))
+        .where(and(eq(stockSnapshots.productId, variantRow.productId), eq(stockSnapshots.tenantId, tenantId)))
         .limit(1);
 
       const before = snap?.qtyUnits ?? 0;
@@ -192,10 +214,11 @@ export async function declareLossAction(input: z.infer<typeof lossSchema>) {
 
       await tx.update(stockSnapshots)
         .set({ qtyUnits: after, lastMovementType: "loss", lastMovementAt: new Date(), updatedAt: new Date() })
-        .where(and(eq(stockSnapshots.variantId, variantId), eq(stockSnapshots.tenantId, tenantId)));
+        .where(and(eq(stockSnapshots.productId, variantRow.productId), eq(stockSnapshots.tenantId, tenantId)));
 
       await tx.insert(stockMovements).values({
-        tenantId, variantId,
+        tenantId,
+        productId: variantRow.productId,
         movementType:   "loss",
         qtyUnitsDelta:  -qtyUnitsLost,
         qtyUnitsBefore: before,
@@ -236,12 +259,22 @@ export async function getStockMovementsAction(variantId?: string) {
   if (!auth.success) return auth;
   const { tenantId } = auth.data;
 
+  let productFilter = undefined;
+  if (variantId) {
+    const [v] = await db
+      .select({ productId: productVariants.productId })
+      .from(productVariants)
+      .where(eq(productVariants.id, variantId))
+      .limit(1);
+    if (v) productFilter = eq(stockMovements.productId, v.productId);
+  }
+
   const rows = await db
     .select()
     .from(stockMovements)
     .where(and(
       eq(stockMovements.tenantId, tenantId),
-      variantId ? eq(stockMovements.variantId, variantId) : undefined,
+      productFilter,
     ))
     .orderBy(desc(stockMovements.createdAt))
     .limit(100);

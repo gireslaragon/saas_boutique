@@ -49,7 +49,7 @@ export const productVariants = pgTable("product_variants", {
 export const productVariantsRelations = relations(productVariants, ({ one, many }) => ({
   tenant:       one(tenants, { fields: [productVariants.tenantId], references: [tenants.id] }),
   product:      one(products, { fields: [productVariants.productId], references: [products.id] }),
-  stockSnapshot: one(stockSnapshots, { fields: [productVariants.id], references: [stockSnapshots.variantId] }),
+  stockSnapshot: one(stockSnapshots, { fields: [productVariants.productId], references: [stockSnapshots.productId] }),
   saleItems:    many(saleItems),
 }));
 

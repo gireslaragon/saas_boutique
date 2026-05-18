@@ -5,6 +5,7 @@ import { tenants } from "@/db/schema/tenants";
 import { events } from "@/db/schema/events";
 import { categories } from "@/db/schema/categories";
 import { guardAdminAction } from "@/lib/auth/role-guards";
+import { createNotification } from "@/repositories/notification.repository";
 import { eq, and } from "drizzle-orm";
 import { z } from "zod";
 
@@ -47,6 +48,13 @@ export async function updateSettingsAction(input: SettingsInput) {
     return { success: false as const, error: parsed.error.errors[0]?.message ?? "Données invalides" };
   }
 
+  // Récupère l'ancien nom pour créer une notification si le nom change
+  const [oldTenant] = await db
+    .select({ name: tenants.name })
+    .from(tenants)
+    .where(eq(tenants.id, tenantId))
+    .limit(1);
+
   await db.update(tenants)
     .set({
       name:                  parsed.data.name,
@@ -69,7 +77,24 @@ export async function updateSettingsAction(input: SettingsInput) {
     payload:     { ...parsed.data },
   });
 
-  return { success: true as const };
+  // Si le nom a changé, créer une notification pour le tenant
+  let notificationCreated = false;
+  try {
+    if (oldTenant?.name && oldTenant.name !== parsed.data.name) {
+      const notifRes = await createNotification({
+        tenantId,
+        type: "tenant:settings",
+        title: "Nom de la boutique modifié",
+        message: `"${oldTenant.name}" → "${parsed.data.name}"`,
+        data: { field: "name", old: oldTenant.name, new: parsed.data.name },
+      });
+      if (notifRes?.success) notificationCreated = true;
+    }
+  } catch {
+    // ne pas bloquer la requête principale si la notification échoue
+  }
+
+  return { success: true as const, notificationCreated };
 }
 
 // ── Gestion catégories ────────────────────────────────────────────────────────

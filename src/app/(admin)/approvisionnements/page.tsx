@@ -25,6 +25,8 @@ export default async function ApprovisionnementsPage() {
       notes:            restockings.notes,
       createdAt:        restockings.createdAt,
       variantLabel:     productVariants.label,
+      variantType:      productVariants.variantType,
+      unitsPerVariant:  productVariants.unitsPerVariant,
       productName:      products.name,
       imageUrl:         products.imageUrl,
       createdByFirst:   users.firstName,
@@ -54,8 +56,8 @@ export default async function ApprovisionnementsPage() {
       </div>
 
       <div className="bg-slate-800/30 border border-slate-700/50 rounded-2xl overflow-hidden">
-        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3 border-b border-slate-700/50 bg-slate-800/50">
-          {["Produit", "Quantité ajoutée", "Prix achat", "Coût total", "Date"].map((h) => (
+        <div className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3 border-b border-slate-700/50 bg-slate-800/50">
+          {["Produit", "Quantité ajoutée", "Paquet / Casier", "Prix achat", "Coût total", "Date"].map((h) => (
             <p key={h} className="text-xs font-semibold text-slate-400">{h}</p>
           ))}
         </div>
@@ -68,7 +70,7 @@ export default async function ApprovisionnementsPage() {
         ) : (
           <div className="divide-y divide-slate-700/30">
             {rows.map((r) => (
-              <div key={r.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 items-center hover:bg-slate-700/20 transition-colors">
+              <div key={r.id} className="grid grid-cols-[2fr_1fr_1fr_1fr_1fr_1fr] gap-4 px-4 py-3.5 items-center hover:bg-slate-700/20 transition-colors">
                 <div className="flex items-center gap-3 min-w-0">
                   <div className="w-8 h-8 rounded-lg bg-slate-700 flex-shrink-0 overflow-hidden">
                     {r.imageUrl
@@ -82,6 +84,17 @@ export default async function ApprovisionnementsPage() {
                   </div>
                 </div>
                 <p className="text-sm text-emerald-400 font-medium">+{formatNumber(r.qtyUnitsAdded)} u</p>
+                <p className="text-sm text-slate-300">
+                  {r.unitsPerVariant && Number(r.unitsPerVariant) > 1 ? (
+                    (() => {
+                      const packs = Number(r.qtyUnitsAdded) / Number(r.unitsPerVariant);
+                      const label = r.variantType === "pack" ? "paquet(s)" : r.variantType === "case" ? "casier(s)" : ""
+                      return `${formatNumber(Number(packs.toFixed(2)))} ${label}`;
+                    })()
+                  ) : (
+                    "—"
+                  )}
+                </p>
                 <p className="text-sm text-slate-300">{formatMoney(Number(r.costPricePerUnit))}</p>
                 <p className="text-sm text-white font-medium">{formatMoney(Number(r.totalCost))}</p>
                 <div>

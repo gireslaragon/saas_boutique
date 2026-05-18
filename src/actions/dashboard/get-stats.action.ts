@@ -8,7 +8,7 @@ import { productVariants } from "@/db/schema/product-variants";
 import { products } from "@/db/schema/products";
 import { users } from "@/db/schema/users";
 import { guardAdminAction } from "@/lib/auth/role-guards";
-import { eq, and, gte, lt, sql, sum, count, desc } from "drizzle-orm";
+import { eq, and, gte, lt, sql, desc } from "drizzle-orm";
 
 // ─── Types ────────────────────────────────────────────────────────────────────
 
@@ -177,7 +177,7 @@ export async function getDashboardStatsAction() {
       threshold:  productVariants.alertThresholdUnits,
     })
     .from(stockSnapshots)
-    .innerJoin(productVariants, eq(stockSnapshots.variantId, productVariants.id))
+    .innerJoin(productVariants, eq(stockSnapshots.productId, productVariants.productId))
     .where(eq(stockSnapshots.tenantId, tenantId));
 
   const lowStockCount   = stockAlerts.filter(
@@ -324,11 +324,11 @@ export async function getLowStockAlertsAction() {
       qtyUnits:     stockSnapshots.qtyUnits,
       threshold:    productVariants.alertThresholdUnits,
     })
-    .from(stockSnapshots)
-    .innerJoin(productVariants, eq(stockSnapshots.variantId, productVariants.id))
+    .from(productVariants)
     .innerJoin(products, eq(productVariants.productId, products.id))
+    .leftJoin(stockSnapshots, and(eq(stockSnapshots.productId, productVariants.productId), eq(stockSnapshots.tenantId, tenantId)))
     .where(and(
-      eq(stockSnapshots.tenantId, tenantId),
+      eq(productVariants.tenantId, tenantId),
       eq(products.isActive, true),
       sql`${stockSnapshots.qtyUnits} <= ${productVariants.alertThresholdUnits}`,
     ))

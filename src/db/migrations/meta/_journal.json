@@ -8,6 +8,20 @@
       "when": 1778830826481,
       "tag": "0000_violet_quentin_quire",
       "breakpoints": true
+    },
+    {
+      "idx": 1,
+      "version": "7",
+      "when": 1778970467102,
+      "tag": "0001_yielding_scorpion",
+      "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1779019931502,
+      "tag": "0002_windy_jazinda",
+      "breakpoints": true
     }
   ]
 }

@@ -2,34 +2,37 @@ import {
   pgTable,
   uuid,
   integer,
-  varchar,
   timestamp,
-  unique,
 } from "drizzle-orm/pg-core";
+
 import { relations } from "drizzle-orm";
-import { productVariants } from "./product-variants";
 import { tenants } from "./tenants";
+import { products } from "./products";
+import { stockMovementTypeEnum } from "./stock-movements";
 
 export const stockSnapshots = pgTable("stock_snapshots", {
-  id:               uuid("id").primaryKey().defaultRandom(),
-  tenantId:         uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
-  variantId:        uuid("variant_id").notNull().references(() => productVariants.id, { onDelete: "cascade" }),
+  id: uuid("id").defaultRandom().primaryKey(),
 
-  // Stock en unités individuelles — SOURCE DE VÉRITÉ
-  qtyUnits:         integer("qty_units").default(0).notNull(),
+  tenantId: uuid("tenant_id").notNull().references(() => tenants.id, { onDelete: "cascade" }),
 
-  // Dernier mouvement (pour affichage rapide)
-  lastMovementAt:   timestamp("last_movement_at", { withTimezone: true }).defaultNow(),
-  lastMovementType: varchar("last_movement_type", { length: 50 }),
+  // Stock lié AU PRODUIT (et non plus à la variante)
+  productId: uuid("product_id").notNull().references(() => products.id, { onDelete: "cascade" }),
 
-  updatedAt:        timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
-}, (t) => ({
-  uniqueVariant: unique("uq_stock_variant").on(t.variantId),
-}));
+  // Toujours en unités de base
+  qtyUnits: integer("qty_units").notNull().default(0),
+
+  lastMovementType: stockMovementTypeEnum("last_movement_type"),
+
+  lastMovementAt: timestamp("last_movement_at"),
+
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
 
 export const stockSnapshotsRelations = relations(stockSnapshots, ({ one }) => ({
-  tenant:   one(tenants, { fields: [stockSnapshots.tenantId], references: [tenants.id] }),
-  variant:  one(productVariants, { fields: [stockSnapshots.variantId], references: [productVariants.id] }),
+  tenant: one(tenants, { fields: [stockSnapshots.tenantId], references: [tenants.id] }),
+  product: one(products, { fields: [stockSnapshots.productId], references: [products.id] }),
 }));
 
 export type StockSnapshot    = typeof stockSnapshots.$inferSelect;
